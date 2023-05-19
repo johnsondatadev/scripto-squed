@@ -80,8 +80,100 @@ SELECT
 FROM invoices i
 JOIN clients
 	USING (client_id)
-GROUP BY state, city
+GROUP BY state, city;
 -- ORDER BY total_sales DESC
 
 -- EXERCISE
+USE sql_invoicing;
 
+SELECT
+	date,
+    pm.name AS payment_method,
+    SUM(amount) AS total_payments
+FROM payments p
+JOIN payment_methods pm
+	ON p.payment_method = pm.payment_method_id
+GROUP BY date, payment_method
+ORDER BY date;
+
+
+-- HAVING CLAUSE - Used for filtering data after it is grouped.
+-- In contrast, WHERE is used for filtering the data before it is grouped.
+-- The column used for reference in HAVING clause should be in the SELECT clause
+-- In contrast, the column does not have to be in the SELECT clause before it can be
+-- used in the WHERE.
+
+USE sql_invoicing;
+SELECT 
+	client_id,
+    SUM(invoice_total) AS total_sales
+FROM invoices
+GROUP BY client_id
+HAVING total_sales > 500;
+
+USE sql_invoicing;
+SELECT 
+	client_id,
+    SUM(invoice_total) AS total_sales,
+    COUNT(*) AS number_of_invoices
+FROM invoices
+GROUP BY client_id
+HAVING total_sales > 500 AND number_of_invoices > 5;
+
+-- EXERCISE
+
+-- Get customers located in Virginia who have spent more than $100
+
+USE sql_store;
+
+SELECT 
+	c.customer_id,
+    c.first_name,
+    c.last_name,
+    SUM(oi.quantity * oi.unit_price) AS total_sales
+FROM customers c
+JOIN orders o
+	USING (customer_id)
+JOIN order_items oi
+	USING (order_id)
+WHERE state = 'VA'
+GROUP BY 
+	c.customer_id,
+    c.first_name,
+    c.last_name
+HAVING total_sales > 100;
+
+-- ROLLUP Operator: Used to generate the total of an aggregate function
+-- Not part of the standard SQL language, it's only available in MySql
+USE sql_invoicing;
+
+SELECT
+	client_id,
+    SUM(invoice_total) AS total_sales,
+    AVG(invoice_total) AS average_sales
+FROM invoices
+GROUP BY client_id WITH ROLLUP;
+
+
+USE sql_invoicing;
+
+SELECT 
+	state,
+    city,
+    SUM(invoice_total) AS total_sales
+FROM invoices i
+JOIN clients c USING (client_id)
+GROUP BY state, city WITH ROLLUP;
+
+
+-- EXERCISE
+
+USE sql_invoicing;
+
+SELECT 
+	pm.name AS payment_method,
+    SUM(amount) AS total
+FROM payments p
+JOIN payment_methods pm
+	ON p.payment_method = pm.payment_method_id
+GROUP BY pm.name WITH ROLLUP
